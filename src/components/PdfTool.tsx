@@ -15,6 +15,8 @@ export default function PdfTool() {
   const [customSize, setCustomSize] = useState({ width: 0, height: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
   const [scaleContent, setScaleContent] = useState(true);
+  const [quality, setQuality] = useState<'high' | 'medium' | 'low'>('high');
+  const [rotation, setRotation] = useState<number>(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,12 +80,18 @@ export default function PdfTool() {
     try {
       const size = targetSize === 'CUSTOM' ? [customSize.width, customSize.height] : PAGE_SIZES[targetSize as keyof typeof PAGE_SIZES];
       
+      const qualityOptions = {
+        high: { scale: 2.5, quality: 0.95 },
+        medium: { scale: 1.5, quality: 0.8 },
+        low: { scale: 1.0, quality: 0.6 },
+      }[quality];
+
       if (files.length === 1) {
-        const result = await resizePdf(files[0], size as [number, number], scaleContent);
+        const result = await resizePdf(files[0], size as [number, number], scaleContent, rotation);
         if (outputFormat === 'pdf') {
           saveAs(new Blob([result], { type: 'application/pdf' }), `resized-${files[0].name}`);
         } else {
-          const images = await pdfToImages(result, outputFormat === 'png' ? 'image/png' : 'image/jpeg');
+          const images = await pdfToImages(result, outputFormat === 'png' ? 'image/png' : 'image/jpeg', qualityOptions);
           if (images.length === 1) {
             saveAs(images[0], `${files[0].name.split('.')[0]}.${outputFormat}`);
           } else {
@@ -98,12 +106,12 @@ export default function PdfTool() {
       } else {
         const zip = new JSZip();
         for (const file of files) {
-          const result = await resizePdf(file, size as [number, number], scaleContent);
+          const result = await resizePdf(file, size as [number, number], scaleContent, rotation);
           
           if (outputFormat === 'pdf') {
             zip.file(`resized-${file.name}`, result);
           } else {
-            const images = await pdfToImages(result, outputFormat === 'png' ? 'image/png' : 'image/jpeg');
+            const images = await pdfToImages(result, outputFormat === 'png' ? 'image/png' : 'image/jpeg', qualityOptions);
             const fileFolder = zip.folder(file.name.split('.')[0]);
             images.forEach((blob, idx) => {
               fileFolder?.file(`page-${idx + 1}.${outputFormat}`, blob);
@@ -242,6 +250,42 @@ export default function PdfTool() {
               className="w-4 h-4 accent-blue-500 rounded border-white/20 bg-white/5"
             />
             <label htmlFor="scale" className="text-xs font-semibold text-white/70 cursor-pointer select-none">Scale content to fit</label>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Rotation</label>
+            <div className="grid grid-cols-4 gap-2">
+              {[0, 90, 180, 270].map(deg => (
+                <button
+                  key={deg}
+                  onClick={() => setRotation(deg)}
+                  className={`
+                    px-2 py-2 text-[10px] font-bold uppercase tracking-wider border rounded-xl transition-all
+                    ${rotation === deg ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'}
+                  `}
+                >
+                  {deg}°
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Extraction Quality</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['low', 'medium', 'high'] as const).map(q => (
+                <button
+                  key={q}
+                  onClick={() => setQuality(q)}
+                  className={`
+                    px-4 py-2 text-[10px] font-bold uppercase tracking-wider border rounded-xl transition-all
+                    ${quality === q ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'}
+                  `}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">

@@ -13,9 +13,9 @@ const FORMATS: { label: string; value: ImageFormat }[] = [
 ];
 
 const PRESETS = [
-  { label: 'High Fidelity', quality: 0.95, maxWidth: 2560, sharpen: true, description: 'Lossless-grade quality' },
-  { label: 'Balanced', quality: 0.8, maxWidth: 1920, sharpen: true, description: 'Optimal for general use' },
-  { label: 'Compact', quality: 0.55, maxWidth: 1024, sharpen: false, description: 'Smallest file size' },
+  { label: 'High', quality: 0.95, maxWidth: 2560, sharpen: true, description: 'Maximum visual fidelity' },
+  { label: 'Medium', quality: 0.8, maxWidth: 1920, sharpen: true, description: 'Optimal for most uses' },
+  { label: 'Low', quality: 0.6, maxWidth: 1024, sharpen: false, description: 'Reduced file size' },
 ];
 
 export default function ImageTool() {
@@ -237,7 +237,7 @@ export default function ImageTool() {
 
             <div className={cn("flex flex-col gap-6 transition-all", autoOptimize && "opacity-40 pointer-events-none grayscale")}>
               <div className="flex flex-col gap-3">
-                <label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Preset Profile</label>
+                <label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Quality Level</label>
                 <div className="grid grid-cols-3 gap-2">
                   {PRESETS.map(p => (
                     <button
